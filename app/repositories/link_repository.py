@@ -146,3 +146,137 @@ class LinkRepository:
         except SQLAlchemyError as e:
             raise DatabaseError(f"check existence of {short_code}", str(e))
 
+    def get_all(
+            self,
+            skip: int = 0,
+            limit: int = 100,
+            include_expired: bool = False
+    ) -> List[Link]:
+        """Get all links with pagination.
+
+        Args:
+            skip: Number of records to skip (for pagination)
+            limit: Maximum number of records to return
+            include_expired: Whether to include expired links
+
+        Returns:
+            List[Link]: List of link objects
+
+        Raises:
+            DatabaseError: For database errors
+        """
+        try:
+            # Build query
+            stmt = select(Link)
+
+            # Filter out expired links if not including them
+            if not include_expired:
+                from datetime import datetime
+                stmt = stmt.where(
+                    (Link.expires_at.is_(None)) |
+                    (Link.expires_at > datetime.now())
+                )
+
+            # Apply pagination
+            stmt = stmt.offset(skip).limit(limit)
+
+            # Execute query
+            result = self.session.execute(stmt)
+            return list(result.scalars().all())
+
+        except SQLAlchemyError as e:
+            raise DatabaseError("get all links", str(e))
+
+
+    def delete(self, short_code: str) -> bool:
+        """Delete a link by short code.
+
+        Args:
+            short_code: The short code of link to delete
+
+        Returns:
+            bool: True if deleted successfully
+
+        Raises:
+            LinkNotFoundError: If link not found
+            DatabaseError: For database errors
+        """
+        try:
+            # Get the link first (will raise LinkNotFoundError if not found)
+            link = self.get_by_short_code(short_code)
+
+            # Delete and commit
+            self.session.delete(link)
+            self.session.commit()
+            return True
+
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise DatabaseError(f"delete link {short_code}", str(e))
+
+    def delete_expired_links(self) -> int:
+        """Delete expired links (for TTL feature).
+
+        Returns:
+            int: Number of deleted links
+
+        Raises:
+            DatabaseError: For database errors
+        """
+        try:
+            from datetime import datetime
+
+            # Delete links where expires_at is in the past
+            stmt = delete(Link).where(Link.expires_at < datetime.now())
+            result = self.session.execute(stmt)
+            self.session.commit()
+
+            return result.rowcount
+
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise DatabaseError("delete expired links", str(e))
+
+
+    def count(self) -> int:
+        """Get total number of links.
+
+        Returns:
+            int: Total count of links
+
+        Raises:
+            DatabaseError: For database errors
+        """
+        try:
+            from sqlalchemy import func
+            stmt = select(func.count(Link.id))
+            result = self.session.execute(stmt)
+            return result.scalar_one()
+
+        except SQLAlchemyError as e:
+            raise DatabaseError("count links", str(e))
+
+    def is_expired(self, short_code: str) -> bool:
+        """Check if a link is expired (for TTL feature).
+
+        Args:
+            short_code: The short code to check
+
+        Returns:
+            bool: True if expired, False otherwise
+
+        Raises:
+            LinkNotFoundError: If link not found
+            DatabaseError: For database errors
+        """
+        try:
+            link = self.get_by_short_code(short_code)
+
+            if not link.expires_at:
+                return False
+
+            from datetime import datetime
+            return datetime.now() > link.expires_at
+
+        except SQLAlchemyError as e:
+            raise DatabaseError(f"check expiration of {short_code}", str(e))
