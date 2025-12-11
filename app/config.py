@@ -30,6 +30,7 @@ class Config:
     """
 
     SHORT_CODE_LENGTH: int = int(os.getenv("SHORT_CODE_LENGTH", "6"))
+    SHORT_CODE_MAX_ATTEMPTS: int = int(os.getenv("SHORT_CODE_MAX_ATTEMPTS", "10"))
     APP_TTL_HOURS: int = int(os.getenv("APP_TTL_HOURS", "24"))
 
     @property
