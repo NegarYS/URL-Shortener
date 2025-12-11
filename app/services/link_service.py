@@ -196,3 +196,56 @@ class LinkService:
         link = self.repository.get_by_short_code(short_code)
 
         return link.original_url
+
+    def get_all_links(self, skip: int = 0, limit: int = 100) -> list:
+        """Get all shortened links.
+
+        Args:
+            skip: Number of records to skip
+            limit: Maximum number of records to return
+
+        Returns:
+            list: List of link dictionaries
+        """
+        links = self.repository.get_all(skip=skip, limit=limit)
+
+        result = []
+        for link in links:
+            result.append({
+                "id": link.id,
+                "original_url": link.original_url,
+                "short_code": link.short_code,
+                "short_url": f"/u/{link.short_code}",
+                "created_at": link.created_at,
+                "expires_at": link.expires_at
+            })
+
+        return result
+
+    def delete_link(self, short_code: str) -> bool:
+        """Delete a short link.
+
+        Args:
+            short_code: The short code to delete
+
+        Returns:
+            bool: True if deleted successfully
+
+        Raises:
+            InvalidShortCodeError: If short code format is invalid
+        """
+        self._validate_short_code_format(short_code)
+
+        return self.repository.delete(short_code)
+
+
+    def delete_expired_links(self) -> int:
+        """Delete expired links (TTL bonus feature).
+
+        Returns:
+            int: Number of deleted links
+        """
+        if config.APP_TTL_HOURS <= 0:
+            return 0  # TTL not enabled
+
+        return self.repository.delete_expired_links()
