@@ -1,4 +1,6 @@
+from datetime import datetime
 from typing import Optional, List
+
 from sqlalchemy.orm import Session
 from sqlalchemy import select, delete
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -26,12 +28,13 @@ class LinkRepository:
         """
         self.session = session
 
-    def create(self, original_url: str, short_code: str) -> Link:
+    def create(self, original_url: str, short_code: str, expires_at: Optional[datetime] = None) -> Link:
         """Create a new shortened link.
 
         Args:
             original_url: The original long URL
             short_code: The generated short code (6 chars)
+            expires_at: The expiration time
 
         Returns:
             Link: The created link object
@@ -42,7 +45,7 @@ class LinkRepository:
         """
         try:
 
-            link = Link(original_url=original_url, short_code=short_code)
+            link = Link(original_url=original_url, short_code=short_code, expires_at=expires_at)
 
             self.session.add(link)
             self.session.commit()
