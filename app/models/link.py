@@ -16,6 +16,7 @@ class Link(Base):
         original_url (str): The original (long) URL.
         short_code (str): The generated short code for the URL.
         created_at (datetime): Timestamp indicating when the link was created.
+        expires_at (Optional[datetime]): Optional expiration datetime.
     """
 
     __tablename__ = "links"
@@ -40,6 +41,10 @@ class Link(Base):
         server_default=func.now(),
         init=False,
     )
+
+    expires_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True, default = None,)
 
     def __repr__(self) -> str:
         """Return a string representation of the Link object."""
