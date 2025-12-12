@@ -76,7 +76,7 @@ class LinkService:
             str: Random short code (6 characters)
 
         Note:
-            Uses method 1 from PDF (Random Generation - صفحه 11)
+            Uses method 1 from PDF (Random Generation)
         """
         alphabet = config.short_code_alphabet
         length = config.SHORT_CODE_LENGTH
