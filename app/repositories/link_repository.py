@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 
 from sqlalchemy.orm import Session
@@ -260,26 +260,16 @@ class LinkRepository:
             raise DatabaseError("count links", str(e))
 
     def is_expired(self, short_code: str) -> bool:
-        """Check if a link is expired (for TTL feature).
-
-        Args:
-            short_code: The short code to check
-
-        Returns:
-            bool: True if expired, False otherwise
-
-        Raises:
-            LinkNotFoundError: If link not found
-            DatabaseError: For database errors
-        """
+        """Check if a link is expired (for TTL feature)."""
         try:
             link = self.get_by_short_code(short_code)
 
             if not link.expires_at:
                 return False
 
-            from datetime import datetime
-            return datetime.now() > link.expires_at
+            now = datetime.now(timezone.utc)
+
+            return now > link.expires_at
 
         except SQLAlchemyError as e:
             raise DatabaseError(f"check expiration of {short_code}", str(e))

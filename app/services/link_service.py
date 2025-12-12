@@ -17,7 +17,9 @@ from app.exceptions import (
     ShortCodeGenerationError,
     InvalidShortCodeError,
     InvalidShortCodeCharactersError,
-    LinkExpiredError
+    LinkExpiredError,
+    LinkNotFoundError,
+    DatabaseError
 )
 from app.config import config
 
