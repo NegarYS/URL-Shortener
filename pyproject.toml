@@ -17,6 +17,8 @@ dependencies = [
     "uvicorn (>=0.38.0,<0.39.0)"
 ]
 
+[tool.poetry.scripts]
+url-shortener = "main:run_server"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
