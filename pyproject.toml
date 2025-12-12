@@ -14,11 +14,14 @@ dependencies = [
     "psycopg2-binary (>=2.9.11,<3.0.0)",
     "schedule (>=1.2.2,<2.0.0)",
     "fastapi (>=0.124.2,<0.125.0)",
-    "uvicorn (>=0.38.0,<0.39.0)"
+    "uvicorn (>=0.38.0,<0.39.0)",
+    "apscheduler (>=3.11.1,<4.0.0)"
 ]
 
 [tool.poetry.scripts]
 url-shortener = "main:run_server"
+url-cleanup = "app.commands.cleanup:cleanup_expired_links"
+url-scheduler = "app.scheduler.ttl_scheduler:start_ttl_scheduler"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
