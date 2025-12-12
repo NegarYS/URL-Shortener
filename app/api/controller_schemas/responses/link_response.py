@@ -61,6 +61,47 @@ class RedirectResponse(BaseModel):
         }
 
 
+class LinksListResponse(BaseModel):
+    """Response for GET /links - List all links."""
+
+    status: str = "success"
+    data: List[LinkData]
+    count: int
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "status": "success",
+                "data": [
+                    {
+                        "id": 1,
+                        "original_url": "https://example.com",
+                        "short_code": "abc123",
+                        "created_at": "2024-01-10T10:30:00",
+                        "expires_at": None,
+                        "short_url": "/u/abc123"
+                    }
+                ],
+                "count": 1
+            }
+        }
+
+
+class LinkDeleteResponse(BaseModel):
+    """Response for DELETE /links/{code} - Link deleted successfully."""
+
+    status: str = "success"
+    message: str = "URL deleted successfully"
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "status": "success",
+                "message": "URL deleted successfully"
+            }
+        }
+
+
 class ErrorResponse(BaseModel):
     """
     Standard error response model.
