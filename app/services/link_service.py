@@ -16,7 +16,8 @@ from app.exceptions import (
     InvalidURLFormatError,
     ShortCodeGenerationError,
     InvalidShortCodeError,
-    InvalidShortCodeCharactersError
+    InvalidShortCodeCharactersError,
+    LinkExpiredError
 )
 from app.config import config
 
@@ -150,22 +151,16 @@ class LinkService:
         # 1. Validate URL
         self.validate_url(original_url)
 
-        # 2. Generate unique short code
         short_code = self.generate_unique_short_code()
 
-        # 3. Calculate expiration time (if TTL enabled)
         expires_at = self._calculate_expires_at()
 
-        # 4. Create link in database
-        # Note: Repository needs to be updated to accept expires_at
         link = self.repository.create(
             original_url=original_url,
             short_code=short_code,
             expires_at=expires_at
         )
 
-        # 5. Construct full short URL
-        # In a real app, this would use config.BASE_URL
         short_url = f"/u/{short_code}"
 
         return {
@@ -189,15 +184,17 @@ class LinkService:
         Raises:
             InvalidShortCodeError: If short code format is invalid
         """
-        # Validate short code format
+
         self._validate_short_code_format(short_code)
 
-        # Get link from repository
+        if self.repository.is_expired(short_code):
+            raise LinkExpiredError(short_code)
+
         link = self.repository.get_by_short_code(short_code)
 
         return link.original_url
 
-    def get_all_links(self, skip: int = 0, limit: int = 100) -> list:
+    def get_all_links(self, skip: int = 0, limit: int = 100, include_expired: bool = False) -> list:
         """Get all shortened links.
 
         Args:
@@ -207,7 +204,7 @@ class LinkService:
         Returns:
             list: List of link dictionaries
         """
-        links = self.repository.get_all(skip=skip, limit=limit)
+        links = self.repository.get_all(skip=skip, limit=limit, include_expired=include_expired)
 
         result = []
         for link in links:
@@ -249,3 +246,35 @@ class LinkService:
             return 0  # TTL not enabled
 
         return self.repository.delete_expired_links()
+
+    def is_expired(self, short_code: str) -> bool:
+        """Check if a link is expired (TTL feature).
+
+        Args:
+            short_code: The short code to check
+
+        Returns:
+            bool: True if expired, False otherwise
+
+        Raises:
+            InvalidShortCodeError: If short code format is invalid
+            LinkNotFoundError: If link not found
+        """
+
+        self._validate_short_code_format(short_code)
+
+        return self.repository.is_expired(short_code)
+
+    def count_links(self) -> dict:
+        """Get statistics about links including TTL information.
+
+        Returns:
+            dict: Statistics about links
+        """
+        total = self.repository.count()
+
+        return {
+            "total": total,
+            "ttl_hours": config.APP_TTL_HOURS,
+            "short_code_length": config.SHORT_CODE_LENGTH
+        }
