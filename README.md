@@ -1,7 +1,5 @@
 # 📘 README - Midterm Final Checklist
  
-This README must remain in your repository and must be fully 
-completed before submitting the midterm. 
  --- 
  
 ## 1. API Test Coverage Table 
